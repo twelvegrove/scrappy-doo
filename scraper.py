@@ -78,12 +78,12 @@ def mech():
     with open(line + '.html', 'w') as outFile:
       outFile.write(response.read())
     print 'wrote ' + line + '.html'
-   # getSchedule(line)
+    #getSchedule(line)
 
   p_subjFile.close()
 
 #==========================================================    
-# only prints schedule, doesn't save to .json yet
+# ****** TO BE REPLACED WITH SCRAPERMONGO.PY *************
 def getSchedule(line):
   with open(line + '.html', 'r') as inFile:
     soup = BeautifulSoup(inFile,'lxml')
