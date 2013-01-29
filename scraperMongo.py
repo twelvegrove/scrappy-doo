@@ -77,12 +77,12 @@ def main():
             loc2 = None
             instructor2 = None
          
-            if counter == 0:
-              crn = field
-            elif counter == 1:
-              course = field
-            elif counter == 2:
-              sec = field
+            if counter == 0: crn = field
+              #crn = field
+            elif counter == 1: course = field
+              #course = field
+            elif counter == 2: sec = field
+              #sec = field
             elif counter == 3:
               title = field
             elif counter == 4:
@@ -126,6 +126,7 @@ def main():
               avail = field
           counter += 1
     print 'Done'
+
 if __name__ == '__main__':
   main()
 

@@ -2,22 +2,71 @@ import mechanize
 import urllib2
 from bs4 import BeautifulSoup
 
-URL = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_dsp_search?p_term=201301'
-SOUP = BeautifulSoup(urllib2.urlopen(URL).read(), 'lxml')
-
+#URL = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_dsp_search?p_term=201301'
+#SOUP = BeautifulSoup(urllib2.urlopen(URL).read(), 'lxml')
+URL = None
+SOUP = None
+YEAR = None
+SEMESTER = None
 
 def main():
 
   print '\n***********************************'
   print 'SCRAPER  JAN 2012'
   print '***********************************\n'
-  getSubjects()
-  getPeople()
-  mech()
+  
+  valid = False
+  while valid == False:
+    number = raw_input('Enter a year:\n')
+    try:
+      YEAR = int(number)
+      YEAR = str(YEAR)
+      valid = True
+    except ValueError:
+      print 'ERROR: Not a valid year!'
+  valid = False
+  while valid == False:
+    number = raw_input('Select a semester: 1) Spring 2) Summer 3) Fall 4) Winter\n')
+    try:
+      number = int(number)
+      print ''
+      if number == 1:
+        semesterCode = '01'
+        SEMESTER = 'Spring'
+        valid = True
+      elif number == 2:
+        semesterCode = '06'
+        SEMESTER = 'Summer'
+        valid = True
+      elif number == 3:
+        semesterCode = '09'
+        SEMESTER = 'Fall'
+        valid = True
+      elif number == 4:
+        semesterCode = '00'
+        SEMESTER = 'Winter'
+        valid = True
+      else:
+        print 'ERROR: Please enter a valid choice'
+    except ValueError:
+        print 'ERROR: Please select a number'        
+  
+  URL = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_dsp_search?p_term=' + YEAR + semesterCode
+  SOUP = BeautifulSoup(urllib2.urlopen(URL).read(), 'lxml')
+
+  school = SOUP.find('h1')
+  h1s = SOUP.findAll('h1')
+  
+  print school.string
+  print h1s[1].string + '\n'
+
+  getSubjects(SOUP)
+  getPeople(SOUP)
+  mech(URL)
   print '\n...DONE!\n'
 
 #==========================================================
-def getSubjects():
+def getSubjects(SOUP):
 
   SubjectFile = open('subjects.txt', 'w')
   p_subjFile = open('p_subj.txt', 'w')
@@ -39,7 +88,7 @@ def getSubjects():
   p_subjFile.close()
 
 #==========================================================
-def getPeople():
+def getPeople(SOUP):
 
   peopleFile = open('people.txt', 'w')
   p_instrFile = open('p_instr_pidm.txt', 'w')
@@ -57,19 +106,24 @@ def getPeople():
   for option in people.findAll('option'):
     #print option.get('value')
     p_instrFile.write(option.get('value')+'\n')
-  print 'Wrote p_instr_pidm to p_instr.txt'
+  print 'Wrote p_instr_pidm to p_instr.txt\n'
   p_instrFile.close()
 
 #==========================================================
 # submit the form for each subject code
-def mech():
+def mech(URL):
 
   br = mechanize.Browser()
   p_subjFile = open('p_subj.txt', 'r')
-  
+  subjFile = open('subjects.txt', 'r')
+  lineCount = 0
+
   for line in p_subjFile:
+    lineCount += 1
     line = line.strip()
-    if line == '': continue
+    if line == '':
+      lineCount -= 1
+      continue
     br.open(URL)
     br.select_form(name='search')  # form name 
     br['p_subj'] = [line]          # field to select from
@@ -78,13 +132,13 @@ def mech():
     with open(line + '.html', 'w') as outFile:
       outFile.write(response.read())
     print 'wrote ' + line + '.html'
-    #getSchedule(line)
+    #getSchedule(line, lineCount)
 
   p_subjFile.close()
 
 #==========================================================    
 # ****** TO BE REPLACED WITH SCRAPERMONGO.PY *************
-def getSchedule(line):
+def getSchedule(line, lineCount):
   with open(line + '.html', 'r') as inFile:
     soup = BeautifulSoup(inFile,'lxml')
     table = soup('table', {'class' : 'table'})[0]  # find the table
