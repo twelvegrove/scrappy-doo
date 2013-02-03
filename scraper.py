@@ -1,15 +1,21 @@
 import mechanize
 import urllib2
+from pymongo import MongoClient
 from bs4 import BeautifulSoup
 
-#URL = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_dsp_search?p_term=201301'
-#SOUP = BeautifulSoup(urllib2.urlopen(URL).read(), 'lxml')
 URL = None
 SOUP = None
 YEAR = None
 SEMESTER = None
+SCHOOL = None
 
 def main():
+
+  global URL
+  global SOUP
+  global YEAR
+  global SEMESTER
+  global SCHOOL
 
   print '\n***********************************'
   print 'SCRAPER  JAN 2012'
@@ -24,6 +30,7 @@ def main():
       valid = True
     except ValueError:
       print 'ERROR: Not a valid year!'
+
   valid = False
   while valid == False:
     number = raw_input('Select a semester: 1) Spring 2) Summer 3) Fall 4) Winter\n')
@@ -54,19 +61,19 @@ def main():
   URL = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_dsp_search?p_term=' + YEAR + semesterCode
   SOUP = BeautifulSoup(urllib2.urlopen(URL).read(), 'lxml')
 
-  school = SOUP.find('h1')
-  h1s = SOUP.findAll('h1')
+  SCHOOL = SOUP.find('h1')  # finds the school name, which is an h1 heading
+  h1s = SOUP.findAll('h1')  # finds the next h1, which is the semester name e.g. Spring 2013
   
-  print school.string
+  print SCHOOL.string
   print h1s[1].string + '\n'
 
-  getSubjects(SOUP)
-  getPeople(SOUP)
-  mech(URL)
+  getSubjects()
+  getPeople()
+  mechSubmit()
   print '\n...DONE!\n'
 
 #==========================================================
-def getSubjects(SOUP):
+def getSubjects():
 
   SubjectFile = open('subjects.txt', 'w')
   p_subjFile = open('p_subj.txt', 'w')
@@ -77,18 +84,18 @@ def getSubjects(SOUP):
     if row.string != 'All': 
       #print row.string
       SubjectFile.write(row.string)  
-  print 'Wrote subjects to subjects.txt'
+  print 'Wrote subject names to subjects.txt'
   SubjectFile.close()
 
 # Get 3-letter major codes for form submission
   for option in subjects.findAll('option'):
     #print option.get('value')
     p_subjFile.write(option.get('value')+'\n')
-  print 'Wrote p_subj to p_subj.txt'
+  print 'Wrote subject codes to p_subj.txt'
   p_subjFile.close()
 
 #==========================================================
-def getPeople(SOUP):
+def getPeople():
 
   peopleFile = open('people.txt', 'w')
   p_instrFile = open('p_instr_pidm.txt', 'w')
@@ -106,12 +113,12 @@ def getPeople(SOUP):
   for option in people.findAll('option'):
     #print option.get('value')
     p_instrFile.write(option.get('value')+'\n')
-  print 'Wrote p_instr_pidm to p_instr.txt\n'
+  print 'Wrote instructor ids to p_instr.txt\n'
   p_instrFile.close()
 
 #==========================================================
 # submit the form for each subject code
-def mech(URL):
+def mechSubmit():
 
   br = mechanize.Browser()
   p_subjFile = open('p_subj.txt', 'r')
@@ -132,12 +139,12 @@ def mech(URL):
     with open(line + '.html', 'w') as outFile:
       outFile.write(response.read())
     print 'wrote ' + line + '.html'
-    #getSchedule(line, lineCount)
+    getSchedule(line, lineCount)
 
   p_subjFile.close()
 
 #==========================================================    
-# ****** TO BE REPLACED WITH SCRAPERMONGO.PY *************
+'''
 def getSchedule(line, lineCount):
   with open(line + '.html', 'r') as inFile:
     soup = BeautifulSoup(inFile,'lxml')
@@ -155,6 +162,137 @@ def getSchedule(line, lineCount):
           print item.string,
         print '|',
       print '' 
+'''
+def getSchedule(line, lineCount):
+  
+  db = MongoClient().test
+  
+  subject = None 
+  crn = -1
+  course = None
+  sec = None
+  title = None
+  credits = None
+  days = None
+  time = None
+  loc1 = None
+  instructor = None
+  attrib = None   # attributes
+  avail = None    # seats available
+  level = None    # grad or undergrad
+  
+  days2 = None
+  time2 = None
+  loc2 = None     # 2nd location, if needed
+  instructor2 = None
+  
+  check = 0
+  counter = 0
+ 
+  #mainArray = ['crn','course','sec','title','credits','days','time','loc1','instructor','attrib','avail']
+  #secondArray = ['days2','time2','loc2','instructor2']
+  
+  with open('subjects.txt', 'r') as inFile:
+    i = 0
+    for subjLine in inFile:
+      subject = subjLine.strip()
+      if subject == '':
+        continue 
+      i += 1
+      if i == lineCount:
+        break  
+  print subject
+
+  with open(line + '.html', 'r') as inFile:
+    soup = BeautifulSoup(inFile,'lxml')
+    table = soup('table', {'class' : 'table'})[0]  # find the table
+
+    trs = table.findAll('tr')                 # find all table rows
+
+    print 'Doing lots of stuff... '
+    for row in trs:
+      counter = 0                        
+      check = 0
+      tds = row.findAll('td')                 # for each row, find all table data
+      #ths = row.findAll('th')
+      for item in tds:
+        field = item.string
+        if field == None: field = ''
+        if field.isdigit() == True and crn != -1:
+            db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+        break
+      for item in tds:
+          field = item.string 
+          #print field
+          if field == None: field = ''
+          if (field.isdigit() == False and counter == 0) or check == 1:
+            # set other values
+            if counter == 0:
+              days2 = field
+              check = 1
+            elif counter == 1:
+              time2 = field
+            elif counter == 2:
+              loc2 = item.get_text()
+            elif counter == 3:
+              instructor2 = field
+              check = 0
+          elif crn != -1:
+            #db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2}) 
+            days2 = None
+            time2 = None
+            loc2 = None
+            instructor2 = None
+         
+            if counter == 0:
+              crn = field
+            elif counter == 1:
+              course = field
+            elif counter == 2:
+              sec = field
+            elif counter == 3:
+              title = field
+            elif counter == 4:
+              credits = field
+            elif counter == 5:
+              days = field
+            elif counter == 6:
+              time = field
+            elif counter == 7:
+              loc1 = item.get_text()
+            elif counter == 8:
+              instructor = field
+            elif counter == 9:
+              attrib = field
+            elif counter == 10:
+              avail = field
+            
+          else:
+            # set main values
+            if counter == 0:
+              crn = field
+            elif counter == 1:
+              course = field
+            elif counter == 2:
+              sec = field
+            elif counter == 3:
+              title = field
+            elif counter == 4:
+              credits = field
+            elif counter == 5:
+              days = field
+            elif counter == 6:
+              time = field
+            elif counter == 7:
+              loc1 = item.get_text()
+            elif counter == 8:
+              instructor = field
+            elif counter == 9:
+              attrib = field
+            elif counter == 10:
+              avail = field
+          counter += 1
+    print 'Done'
 
 #==========================================================
 def toJSON():

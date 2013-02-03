@@ -7,14 +7,15 @@ def blah():
   db.examples.insert({'name':'kurt'})
   db.examples.insert({'_id':'12345'})
  
-  
-
 def main():
+  getSchedule()  
+
+def getSchedule():
   
   db = MongoClient().test
   
   subject = 'Anthropology'  # change for each subject
-  crn = 0
+  crn = -1
   course = None
   sec = None
   title = None
@@ -35,10 +36,10 @@ def main():
   check = 0
   counter = 0
  
-  mainArray = ['crn','course','sec','title','credits','days','time','loc1','instructor','attrib','avail']
-  secondArray = ['days2','time2','loc2','instructor2']
+  #mainArray = ['crn','course','sec','title','credits','days','time','loc1','instructor','attrib','avail']
+  #secondArray = ['days2','time2','loc2','instructor2']
 
-  with open('BIO.html', 'r') as inFile:
+  with open('ANC.html', 'r') as inFile:
     soup = BeautifulSoup(inFile,'lxml')
     table = soup('table', {'class' : 'table'})[0]  # find the table
 
@@ -51,7 +52,7 @@ def main():
       tds = row.findAll('td')                 # for each row, find all table data
       #ths = row.findAll('th')
       for item in tds:
-        if item.string.isdigit() == True:
+        if item.string.isdigit() == True and crn != -1:
             db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
         break
       for item in tds:
@@ -70,7 +71,7 @@ def main():
             elif counter == 3:
               instructor2 = field
               check = 0
-          elif crn != 0:
+          elif crn != -1:
             #db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2}) 
             days2 = None
             time2 = None
