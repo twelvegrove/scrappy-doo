@@ -144,25 +144,6 @@ def mechSubmit():
   p_subjFile.close()
 
 #==========================================================    
-'''
-def getSchedule(line, lineCount):
-  with open(line + '.html', 'r') as inFile:
-    soup = BeautifulSoup(inFile,'lxml')
-    table = soup('table', {'class' : 'table'})[0]  # find the table
-
-    trs = table.findAll('tr')                 # find all table rows
-
-    for row in trs:                        
-      tds = row.findAll('td')                 # for each row, find all table data
-      for item in tds:
-        if item.find('abbr'):                 # if td includes 'abbr' tag (i.e. it is the classroom field)
-        #print item.find('abbr').string,
-          print item.get_text(),
-        else:
-          print item.string,
-        print '|',
-      print '' 
-'''
 def getSchedule(line, lineCount):
   
   db = MongoClient().test
@@ -189,9 +170,6 @@ def getSchedule(line, lineCount):
   check = 0
   counter = 0
  
-  #mainArray = ['crn','course','sec','title','credits','days','time','loc1','instructor','attrib','avail']
-  #secondArray = ['days2','time2','loc2','instructor2']
-  
   with open('subjects.txt', 'r') as inFile:
     i = 0
     for subjLine in inFile:
@@ -201,29 +179,30 @@ def getSchedule(line, lineCount):
       i += 1
       if i == lineCount:
         break  
-  print subject
 
   with open(line + '.html', 'r') as inFile:
     soup = BeautifulSoup(inFile,'lxml')
     table = soup('table', {'class' : 'table'})[0]  # find the table
 
     trs = table.findAll('tr')                 # find all table rows
-
-    print 'Doing lots of stuff... '
+    print 'Adding ' + subject + ' classes to database...',
+    
     for row in trs:
       counter = 0                        
       check = 0
       tds = row.findAll('td')                 # for each row, find all table data
-      #ths = row.findAll('th')
+     
+      # This stupid loop tests whether or not the next line has a CRN, and if so, insert current line to db.
+      # If not, there are additional meeting times, so wait til the next time around to insert. 
+      # if crn != -1 ensures that it doesn't insert the first time around, when all values are null.
       for item in tds:
         field = item.string
         if field == None: field = ''
         if field.isdigit() == True and crn != -1:
-            db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+            db.spring2013.insert({'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
         break
       for item in tds:
           field = item.string 
-          #print field
           if field == None: field = ''
           if (field.isdigit() == False and counter == 0) or check == 1:
             # set other values
@@ -237,8 +216,8 @@ def getSchedule(line, lineCount):
             elif counter == 3:
               instructor2 = field
               check = 0
+
           elif crn != -1:
-            #db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2}) 
             days2 = None
             time2 = None
             loc2 = None
@@ -292,14 +271,12 @@ def getSchedule(line, lineCount):
             elif counter == 10:
               avail = field
           counter += 1
-    print 'Done'
 
-#==========================================================
-def toJSON():
-  print 'json comes from here'  
+    # now insert the last class row
+    db.spring2013.insert({'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+    print ' done'
+
 
   
 if __name__ == '__main__':
   main()
-
-

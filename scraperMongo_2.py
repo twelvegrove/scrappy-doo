@@ -47,7 +47,10 @@ def getSchedule():
       counter = 0                        
       check = 0
       tds = row.findAll('td')                 # for each row, find all table data
-      #ths = row.findAll('th')
+     
+      # This loop tests whether or not the next row has a CRN, and if so, insert the current row to db.
+      # If not, it's part of the same CRN (additional meeting time) so wait til the next time around to insert.
+      # if crn != -1 ensures that it does not insert the first time around, when all values are null.
       for item in tds:
         field = item.string
         if field == None: field = ''
@@ -71,7 +74,6 @@ def getSchedule():
               instructor2 = field
               check = 0
           elif crn != -1:
-            #db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2}) 
             days2 = None
             time2 = None
             loc2 = None
@@ -125,6 +127,8 @@ def getSchedule():
             elif counter == 10:
               avail = field
           counter += 1
+    # now submit the last class row
+    db.spring2013.insert({'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
     print 'Done'
 
 if __name__ == '__main__':
