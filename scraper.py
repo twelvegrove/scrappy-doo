@@ -157,10 +157,10 @@ def getClasses(line, lineCount):
   sec = None
   title = None
   credits = None
-  days = None
-  time = None
+  days1 = None
+  time1 = None
   loc1 = None
-  instructor = None
+  instructor1 = None
   attrib = None   # attributes
   avail = None    # seats available
   level = None    # grad or undergrad
@@ -197,7 +197,6 @@ def getClasses(line, lineCount):
       check = 0
       tds = row.findAll('td')                 # for each row, find all table data
 
-      
 
       # This stupid loop tests whether or not the next line has a CRN, and if so, insert current line to db.
       # If not, there are additional meeting times, so wait til the next time around to insert. 
@@ -206,7 +205,7 @@ def getClasses(line, lineCount):
         field = item.string
         if field == None: field = ''
         if field.isdigit() == True and crn != -1:
-            db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+            db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days1':days1,'time1':time1,'loc1':loc1,'instructor1':instructor1,'attrib':attrib,'seatsAvail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
         break
       for item in tds:
           field = item.string 
@@ -250,13 +249,13 @@ def getClasses(line, lineCount):
             elif counter == 4:
               credits = field
             elif counter == 5:
-              days = field
+              days1 = field
             elif counter == 6:
-              time = field
+              time1 = field
             elif counter == 7:
               loc1 = item.get_text()
             elif counter == 8:
-              instructor = field
+              instructor1 = field
             elif counter == 9:
               attrib = field
             elif counter == 10:
@@ -284,13 +283,13 @@ def getClasses(line, lineCount):
             elif counter == 4:
               credits = field
             elif counter == 5:
-              days = field
+              days1 = field
             elif counter == 6:
-              time = field
+              time1 = field
             elif counter == 7:
               loc1 = item.get_text()
             elif counter == 8:
-              instructor = field
+              instructor1 = field
             elif counter == 9:
               attrib = field
             elif counter == 10:
@@ -298,7 +297,7 @@ def getClasses(line, lineCount):
           counter += 1
 
     # now insert the last class row
-    db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+    db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days1':days1,'time1':time1,'loc1':loc1,'instructor1':instructor1,'attrib':attrib,'seatsAvail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
     print 'done'
 
 
