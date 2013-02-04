@@ -8,6 +8,7 @@ SOUP = None
 YEAR = None
 SEMESTER = None
 SCHOOL = None
+SEMESTERCODE = None
 
 def main():
 
@@ -16,9 +17,10 @@ def main():
   global YEAR
   global SEMESTER
   global SCHOOL
+  global SEMESTERCODE
 
   print '\n***********************************'
-  print 'SCRAPER  JAN 2012'
+  print 'SCRAPER  JAN-FEB 2013'
   print '***********************************\n'
   
   valid = False
@@ -38,19 +40,19 @@ def main():
       number = int(number)
       print ''
       if number == 1:
-        semesterCode = '01'
+        SEMESTERCODE = '01'
         SEMESTER = 'Spring'
         valid = True
       elif number == 2:
-        semesterCode = '06'
+        SEMESTERCODE = '06'
         SEMESTER = 'Summer'
         valid = True
       elif number == 3:
-        semesterCode = '09'
+        SEMESTERCODE = '09'
         SEMESTER = 'Fall'
         valid = True
       elif number == 4:
-        semesterCode = '00'
+        SEMESTERCODE = '00'
         SEMESTER = 'Winter'
         valid = True
       else:
@@ -58,7 +60,7 @@ def main():
     except ValueError:
         print 'ERROR: Please select a number'        
   
-  URL = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_dsp_search?p_term=' + YEAR + semesterCode
+  URL = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_dsp_search?p_term=' + YEAR + SEMESTERCODE
   SOUP = BeautifulSoup(urllib2.urlopen(URL).read(), 'lxml')
 
   SCHOOL = SOUP.find('h1')  # finds the school name, which is an h1 heading
@@ -162,6 +164,7 @@ def getClasses(line, lineCount):
   attrib = None   # attributes
   avail = None    # seats available
   level = None    # grad or undergrad
+  link = None  
   
   days2 = None
   time2 = None
@@ -193,7 +196,9 @@ def getClasses(line, lineCount):
       counter = 0                        
       check = 0
       tds = row.findAll('td')                 # for each row, find all table data
-     
+
+      
+
       # This stupid loop tests whether or not the next line has a CRN, and if so, insert current line to db.
       # If not, there are additional meeting times, so wait til the next time around to insert. 
       # if crn != -1 ensures that it doesn't insert the first time around, when all values are null.
@@ -201,7 +206,7 @@ def getClasses(line, lineCount):
         field = item.string
         if field == None: field = ''
         if field.isdigit() == True and crn != -1:
-            db.courses.insert({'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+            db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
         break
       for item in tds:
           field = item.string 
@@ -227,6 +232,7 @@ def getClasses(line, lineCount):
          
             if counter == 0:
               crn = field
+              link = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_display_sect?p_term_code=' + YEAR + SEMESTERCODE + '&p_crn=' + crn
             elif counter == 1:
               course = field
               try:
@@ -260,6 +266,7 @@ def getClasses(line, lineCount):
             # set main values
             if counter == 0:
               crn = field
+              link = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_display_sect?p_term_code=' + YEAR + SEMESTERCODE + '&p_crn=' + crn
             elif counter == 1:
               course = field
               try:
@@ -291,7 +298,7 @@ def getClasses(line, lineCount):
           counter += 1
 
     # now insert the last class row
-    db.courses.insert({'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+    db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
     print 'done'
 
 
