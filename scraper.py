@@ -63,7 +63,8 @@ def main():
 
   SCHOOL = SOUP.find('h1')  # finds the school name, which is an h1 heading
   h1s = SOUP.findAll('h1')  # finds the next h1, which is the semester name e.g. Spring 2013
-  
+  SCHOOL = SCHOOL.string
+
   print SCHOOL.string
   print h1s[1].string + '\n'
 
@@ -139,12 +140,12 @@ def mechSubmit():
     with open(line + '.html', 'w') as outFile:
       outFile.write(response.read())
     print 'wrote ' + line + '.html'
-    getSchedule(line, lineCount)
+    getClasses(line, lineCount)
 
   p_subjFile.close()
 
 #==========================================================    
-def getSchedule(line, lineCount):
+def getClasses(line, lineCount):
   
   db = MongoClient().test
   
@@ -180,12 +181,13 @@ def getSchedule(line, lineCount):
       if i == lineCount:
         break  
 
+  print '   Processing ' + subject + '... ',
+
   with open(line + '.html', 'r') as inFile:
     soup = BeautifulSoup(inFile,'lxml')
     table = soup('table', {'class' : 'table'})[0]  # find the table
 
     trs = table.findAll('tr')                 # find all table rows
-    print 'Adding ' + subject + ' classes to database...',
     
     for row in trs:
       counter = 0                        
@@ -199,7 +201,7 @@ def getSchedule(line, lineCount):
         field = item.string
         if field == None: field = ''
         if field.isdigit() == True and crn != -1:
-            db.spring2013.insert({'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+            db.courses.insert({'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
         break
       for item in tds:
           field = item.string 
@@ -227,6 +229,14 @@ def getSchedule(line, lineCount):
               crn = field
             elif counter == 1:
               course = field
+              try:
+                num = int(course[3:])
+                if num < 500:
+                  level = 'undergraduate'
+                else:
+                  level = 'graduate'
+              except ValueError:
+                print 'ERROR: unknown course level' 
             elif counter == 2:
               sec = field
             elif counter == 3:
@@ -252,6 +262,14 @@ def getSchedule(line, lineCount):
               crn = field
             elif counter == 1:
               course = field
+              try:
+                num = int(course[3:])
+                if num < 500:
+                  level = 'undergraduate'
+                else:
+                  level = 'graduate'
+              except ValueError:
+                print 'ERROR: unknown course level' 
             elif counter == 2:
               sec = field
             elif counter == 3:
@@ -273,8 +291,8 @@ def getSchedule(line, lineCount):
           counter += 1
 
     # now insert the last class row
-    db.spring2013.insert({'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
-    print ' done'
+    db.courses.insert({'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days':days,'time':time,'loc1':loc1,'instructor':instructor,'attrib':attrib,'avail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+    print 'done'
 
 
   
