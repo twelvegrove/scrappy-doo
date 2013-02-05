@@ -11,7 +11,7 @@ def blah():
  
 def blah2():
   test = "CPS333"
-  number = test[3:]
+  number = test[:3]
   print number
 
 def main():

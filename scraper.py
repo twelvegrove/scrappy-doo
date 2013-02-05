@@ -20,7 +20,7 @@ def main():
   global SEMESTERCODE
 
   print '\n***********************************'
-  print 'SCRAPER  JAN-FEB 2013'
+  print 'CLASS SCRAPER  JAN-FEB 2013'
   print '***********************************\n'
   
   valid = False
@@ -101,7 +101,7 @@ def getSubjects():
 def getPeople():
 
   peopleFile = open('people.txt', 'w')
-  p_instrFile = open('p_instr_pidm.txt', 'w')
+  p_instrFile = open('p_instr.txt', 'w')
   people = SOUP.find(id = 'p_instr_pidm')
 
 # Get full names of professors, output to file 
@@ -165,6 +165,7 @@ def getClasses(line, lineCount):
   avail = None    # seats available
   level = None    # grad or undergrad
   link = None  
+  isRelated = None  # boolean value; is class in the 'related courses' section?
   
   days2 = None
   time2 = None
@@ -196,8 +197,6 @@ def getClasses(line, lineCount):
       counter = 0                        
       check = 0
       tds = row.findAll('td')                 # for each row, find all table data
-
-
       # This stupid loop tests whether or not the next line has a CRN, and if so, insert current line to db.
       # If not, there are additional meeting times, so wait til the next time around to insert. 
       # if crn != -1 ensures that it doesn't insert the first time around, when all values are null.
@@ -205,7 +204,7 @@ def getClasses(line, lineCount):
         field = item.string
         if field == None: field = ''
         if field.isdigit() == True and crn != -1:
-            db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days1':days1,'time1':time1,'loc1':loc1,'instructor1':instructor1,'attrib':attrib,'seatsAvail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+          db.courses.insert({'isRelated':isRelated,'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days1':days1,'time1':time1,'loc1':loc1,'instructor1':instructor1,'attrib':attrib,'seatsAvail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
         break
       for item in tds:
           field = item.string 
@@ -230,8 +229,9 @@ def getClasses(line, lineCount):
             instructor2 = None
          
             if counter == 0:
-              crn = field
-              link = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_display_sect?p_term_code=' + YEAR + SEMESTERCODE + '&p_crn=' + crn
+              try: crn = int(field)
+              except ValueError: crn = field
+              link = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_display_sect?p_term_code=' + YEAR + SEMESTERCODE + '&p_crn=' + str(crn)
             elif counter == 1:
               course = field
               try:
@@ -242,6 +242,7 @@ def getClasses(line, lineCount):
                   level = 'graduate'
               except ValueError:
                 print 'ERROR: unknown course level' 
+              isRelated = not(course[:3] == line) # if the course matches the subject code, it's not a related course
             elif counter == 2:
               sec = field
             elif counter == 3:
@@ -259,13 +260,15 @@ def getClasses(line, lineCount):
             elif counter == 9:
               attrib = field
             elif counter == 10:
-              avail = field
+              try: avail = int(field)
+              except ValueError: avail = 0
             
           else:
             # set main values
             if counter == 0:
-              crn = field
-              link = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_display_sect?p_term_code=' + YEAR + SEMESTERCODE + '&p_crn=' + crn
+              try: crn = int(field)
+              except ValueError: crn = field
+              link = 'https://banner.newpaltz.edu/pls/PROD/bwckzschd.p_display_sect?p_term_code=' + YEAR + SEMESTERCODE + '&p_crn=' + str(crn)
             elif counter == 1:
               course = field
               try:
@@ -276,6 +279,7 @@ def getClasses(line, lineCount):
                   level = 'graduate'
               except ValueError:
                 print 'ERROR: unknown course level' 
+              isRelated = not(course[:3] == line) # if the course matches the subject code, it's not a related course
             elif counter == 2:
               sec = field
             elif counter == 3:
@@ -293,11 +297,12 @@ def getClasses(line, lineCount):
             elif counter == 9:
               attrib = field
             elif counter == 10:
-              avail = field
+              try: avail = int(field)
+              except ValueError: avail = 0
           counter += 1
 
     # now insert the last class row
-    db.courses.insert({'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days1':days1,'time1':time1,'loc1':loc1,'instructor1':instructor1,'attrib':attrib,'seatsAvail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
+    db.courses.insert({'isRelated':isRelated,'link':link,'school':SCHOOL,'year':YEAR,'semester':SEMESTER,'level':level,'subject':subject,'crn':crn,'course':course,'sec':sec,'title':title,'credits':credits,'days1':days1,'time1':time1,'loc1':loc1,'instructor1':instructor1,'attrib':attrib,'seatsAvail':avail,'days2':days2,'time2':time2,'loc2':loc2,'instructor2':instructor2})
     print 'done'
 
 
