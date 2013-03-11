@@ -207,7 +207,7 @@ def getClasses(line, lineCount):
         field = item.string
         if field == None: field = ''
         if field.isdigit() == True and crn != -1:
-          db.courses.insert({'sessions':[{'instructor':instructor1,'time':time1,'days':days1,'location':loc1},{'instructor':instructor2,'time':time2,'days':days2,'location':loc2}],'course':course,'semester':SEMESTER,'section':sec,'year':YEAR,'subject':subject,'title':title,'credits':credits,'link':link,'isRelated':isRelated,'school':SCHOOL,'level':level,'attributes':attrib,'crn':crn,'seatsAvailable':avail})
+          db.classes.insert({'sessions':[{'instructor':instructor1,'time':time1,'days':days1,'location':loc1},{'instructor':instructor2,'time':time2,'days':days2,'location':loc2}],'course':course,'semester':SEMESTER,'section':sec,'year':YEAR,'subject':subject,'title':title,'credits':credits,'link':link,'isRelated':isRelated,'school':SCHOOL,'level':level,'attributes':attrib,'crn':crn,'seatsAvailable':avail})
         break
       for item in tds:
           field = item.string 
@@ -305,7 +305,7 @@ def getClasses(line, lineCount):
           counter += 1
 
     # now insert the last class row
-    db.courses.insert({'sessions':[{'instructor':instructor1,'time':time1,'days':days1,'location':loc1},{'instructor':instructor2,'time':time2,'days':days2,'location':loc2}],'course':course,'semester':SEMESTER,'section':sec,'year':YEAR,'subject':subject,'title':title,'credits':credits,'link':link,'isRelated':isRelated,'school':SCHOOL,'level':level,'attributes':attrib,'crn':crn,'seatsAvailable':avail})
+    db.classes.insert({'sessions':[{'instructor':instructor1,'time':time1,'days':days1,'location':loc1},{'instructor':instructor2,'time':time2,'days':days2,'location':loc2}],'course':course,'semester':SEMESTER,'section':sec,'year':YEAR,'subject':subject,'title':title,'credits':credits,'link':link,'isRelated':isRelated,'school':SCHOOL,'level':level,'attributes':attrib,'crn':crn,'seatsAvailable':avail})
     print 'done'
 
 
